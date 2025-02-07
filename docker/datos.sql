@@ -1,5 +1,6 @@
 USE `tienda`;
 
+DROP TABLE tienda;
 CREATE TABLE
     `tienda` (
         `cod` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -11,8 +12,7 @@ CREATE TABLE
     `usuarios` (
         `cod` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         `nombre` VARCHAR(100) NOT NULL,
-        `password` VARCHAR(250) NULL,
-        `token` VARCHAR(250) UNIQUE NULL,
+        `password` VARCHAR(250) NULL
     ) ENGINE = INNODB;
 
 CREATE TABLE

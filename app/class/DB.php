@@ -89,7 +89,7 @@ class DB
    {
       $filas = [];
       if (!$this->con) {
-         return false;
+         return [];
       }
 
       return $filas;
@@ -173,35 +173,34 @@ class DB
       }
    }
 
-   private static function genToken(): string
+   private static function genToken(string $username, string $passwd): string
    {
-      return bin2hex(random_bytes(64));
-   }
-
-   private static function updateToken(array $user): string
-   {
-      $token = self::genToken();
-      $db = new DB();
-      $sql = "UPDATE usuarios SET token = ? WHERE id = ?";
-      $db->ejecuta_sentencia($sql, [$token, $user["id"]]);
-      $db->close();
-      return $token;
-
+      return password_hash("$username$passwd", PASSWORD_BCRYPT);
    }
 
    public static function getUser(string $token): array
    {
       $db = new DB();
-      $sql = "SELECT * FROM usuarios WHERE token = ?";
+      $sql = "SELECT * FROM usuarios";
       try {
-         $stmt = $db->ejecuta_sentencia($sql, [$token]);
-         $stmt->bind_result($id, $nombre, $pass, $token, $rol);
+         $stmt = $db->ejecuta_sentencia($sql, []);
          $stmt->fetch();
+         $result = $stmt->get_result();
+         $user = [];
+         if ($result->num_rows > 0) {
+             while ($row = $result->fetch_assoc()) {
+                 $id = $row["cod"];
+                 $nombre = $row["nombre"];
+                 $pass = $row["pass"];
+                 $valid_token = self::genToken($nombre, $pass);
+                 if (password_verify($valid_token, $token)) {
+                    $user = ["id" => $id, "nombre" => $nombre, "pass" => $pass, "token" => $valid_token];
+                    break;
+                 }
+             }
+         }
          $stmt->close();
          $db->close();
-         $user = ["id" => $id, "nombre" => $nombre, "pass" => $pass, "token" => $token, "rol" => $rol];
-         $token = self::updateToken($user);
-         $user["token"] = $token;
          return $user;
       } catch (Exception $e) {
          echo "Error: " . $e->getMessage();
